@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Hub</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1f232c; --border:#2a2f3a;
+    --text:#e8eaed; --muted:#9aa1ac; --accent:#5b8def; --accent2:#3f6bd4;
+    --good:#3ecf8e; --warn:#e0a94b; --bad:#e05b5b;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);min-height:100vh;}
+  .center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:32px;width:100%;max-width:380px;}
+  .card h1{font-size:20px;margin:0 0 4px;}
+  .card p.sub{color:var(--muted);font-size:13px;margin:0 0 20px;}
+  input, textarea, select{
+    width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:10px;font-family:inherit;
+  }
+  textarea{resize:vertical;min-height:70px;}
+  button{
+    background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 16px;
+    font-size:14px;font-weight:600;cursor:pointer;
+  }
+  button:hover{background:var(--accent2);}
+  button.secondary{background:var(--panel2);border:1px solid var(--border);color:var(--text);}
+  button.danger{background:var(--bad);}
+  button.ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+  .full{width:100%;}
+  .error{color:var(--bad);font-size:13px;margin:6px 0 0;}
+  .hidden{display:none !important;}
+
+  /* App shell */
+  #app{max-width:920px;margin:0 auto;padding:16px;}
+  header.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 4px 18px;}
+  header.topbar h1{font-size:18px;margin:0;}
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;border-bottom:1px solid var(--border);}
+  .tab-btn{background:transparent;color:var(--muted);border:none;padding:10px 14px;font-size:14px;border-radius:8px 8px 0 0;white-space:nowrap;}
+  .tab-btn.active{color:var(--text);background:var(--panel2);font-weight:600;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;}
+  .panel h2{font-size:15px;margin:0 0 12px;}
+  .panel h3{font-size:13px;color:var(--muted);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.03em;}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .row > *{flex:1;min-width:140px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--border);
+    border-radius:999px;padding:5px 10px;font-size:12px;margin:3px 4px 3px 0;}
+  .chip button{background:none;border:none;color:var(--muted);padding:0;font-size:14px;cursor:pointer;}
+  .job-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
+  .job-card .title{font-weight:600;font-size:14px;}
+  .job-card .meta{color:var(--muted);font-size:12px;margin:4px 0 10px;}
+  .job-card .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .status-badge{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+  .status-saved{background:#2a2f3a;color:var(--muted);}
+  .status-applied{background:#22344a;color:var(--accent);}
+  .status-interview{background:#3a3320;color:var(--warn);}
+  .status-offer{background:#1c3a2d;color:var(--good);}
+  .status-rejected{background:#3a2222;color:var(--bad);}
+  .qa-item{border-bottom:1px solid var(--border);padding:10px 0;}
+  .qa-item .q{font-size:13px;font-weight:600;}
+  .qa-item .a{font-size:13px;color:var(--muted);margin-top:4px;white-space:pre-wrap;}
+  .small{font-size:12px;color:var(--muted);}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel2);
+    border:1px solid var(--border);padding:10px 18px;border-radius:8px;font-size:13px;z-index:50;}
+  .lock-icon{font-size:28px;margin-bottom:8px;}
+  .flexbtns{display:flex;gap:8px;margin-top:14px;}
+  a{color:var(--accent);}
+  .empty{color:var(--muted);font-size:13px;padding:20px 0;text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOCK SCREEN ===================== -->
+<div id="lockScreen" class="center-screen">
+  <div class="card">
+    <div class="lock-icon">🔒</div>
+    <h1 id="lockTitle">Unlock Job Hub</h1>
+    <p class="sub" id="lockSub">Your data is encrypted with this password. There is no reset — if you forget it, you'll need to wipe and start over.</p>
+    <p class="small" id="lockNote" style="text-align:center;">Entering it wrong just shows an error — nothing is ever deleted unless you deliberately tap "Wipe all data" below and confirm.</p>
+    <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password">
+    <input type="password" id="pwInput2" class="hidden" placeholder="Confirm password" autocomplete="new-password">
+    <button class="full" id="unlockBtn">Unlock</button>
+    <div class="error hidden" id="lockError"></div>
+    <p class="small" style="margin-top:16px;text-align:center;">
+      <a href="#" id="wipeLink">Wipe all data &amp; start fresh</a>
+    </p>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app" class="hidden">
+  <header class="topbar">
+    <h1>🗂️ Job Hub</h1>
+    <div class="row" style="max-width:220px;gap:8px;">
+      <button class="ghost" id="lockBtn">Lock</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn" data-tab="find">Find Jobs</button>
+    <button class="tab-btn" data-tab="tracker">Tracker</button>
+    <button class="tab-btn" data-tab="profile">My Profile</button>
+    <button class="tab-btn" data-tab="answers">Answer Bank</button>
+    <button class="tab-btn" data-tab="sources">Sources</button>
+    <button class="tab-btn" data-tab="settings">Settings</button>
+  </div>
+
+  <!-- FIND JOBS -->
+  <div class="tab-pane" id="tab-find">
+    <div class="panel">
+      <h2>Search criteria</h2>
+      <div class="row">
+        <div>
+          <label>Keywords (comma separated, matched against title)</label>
+          <input id="critKeywords" placeholder="product designer, ux designer">
+        </div>
+        <div>
+          <label>Locations (comma separated; "remote" matches remote roles)</label>
+          <input id="critLocations" placeholder="san diego, remote">
+        </div>
+      </div>
+      <button id="runSearchBtn">Search added companies</button>
+      <span class="small" id="searchStatus" style="margin-left:10px;"></span>
+    </div>
+    <div class="panel">
+      <h2>Results</h2>
+      <div id="resultsList"><div class="empty">Add some companies in the Sources tab, then run a search.</div></div>
+    </div>
+  </div>
+
+  <!-- TRACKER -->
+  <div class="tab-pane hidden" id="tab-tracker">
+    <div class="panel">
+      <h2>Your applications</h2>
+      <div id="trackerList"><div class="empty">Nothing saved yet. Save jobs from the Find Jobs tab.</div></div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="tab-pane hidden" id="tab-profile">
+    <div class="panel">
+      <h2>Your info (fill once, reused everywhere)</h2>
+      <div class="row">
+        <div><label>Full name</label><input id="pFullName"></div>
+        <div><label>Email</label><input id="pEmail"></div>
+      </div>
+      <div class="row">
+        <div><label>Phone</label><input id="pPhone"></div>
+        <div><label>City / State</label><input id="pLocation" placeholder="San Diego, CA"></div>
+      </div>
+      <div class="row">
+        <div><label>LinkedIn URL</label><input id="pLinkedIn"></div>
+        <div><label>Portfolio / website</label><input id="pPortfolio"></div>
+      </div>
+      <label>Resume</label>
+      <div class="row" style="align-items:center;">
+        <input type="file" id="pResumeFile" accept=".pdf,.docx" style="flex:2;">
+        <span class="small" id="resumeParseStatus" style="flex:1;"></span>
+      </div>
+      <p class="small" style="margin:2px 0 10px;">Upload a .pdf or .docx and it'll extract the text below automatically — review/clean it up, since extraction isn't always perfect (tables, columns, and special formatting can come out messy). You can also just paste/edit text directly.</p>
+      <textarea id="pResume" style="min-height:220px;"></textarea>
+      <label>Short professional summary (2-3 sentences, used in prep sheets)</label>
+      <textarea id="pSummary"></textarea>
+      <button id="saveProfileBtn">Save profile</button>
+      <span class="small" id="profileSaved" style="margin-left:10px;"></span>
+    </div>
+  </div>
+
+  <!-- ANSWER BANK -->
+  <div class="tab-pane hidden" id="tab-answers">
+    <div class="panel">
+      <h2>Common application questions</h2>
+      <p class="small">Add each question once. When you generate a prep sheet for a job, these get pulled in automatically so you never retype them.</p>
+      <div class="row">
+        <div style="flex:2;"><label>Question</label><input id="qaQuestion" placeholder="Why do you want to work here?"></div>
+      </div>
+      <label>Your answer</label>
+      <textarea id="qaAnswer"></textarea>
+      <button id="addQaBtn">Add / update answer</button>
+      <h3>Saved answers</h3>
+      <div id="qaList"><div class="empty">No answers saved yet.</div></div>
+    </div>
+  </div>
+
+  <!-- SOURCES -->
+  <div class="tab-pane hidden" id="tab-sources">
+    <div class="panel">
+      <h2>Companies to search</h2>
+      <p class="small">
+        Add companies that post through <b>Greenhouse</b> or <b>Lever</b> — both have free, public job-board APIs.
+        Find a company's board token by opening their careers page: Greenhouse URLs look like
+        <code>boards.greenhouse.io/COMPANY</code>, Lever URLs look like <code>jobs.lever.co/COMPANY</code>.
+        The word after the slash is the token to add below.
+      </p>
+      <div class="row">
+        <select id="srcType">
+          <option value="greenhouse">Greenhouse</option>
+          <option value="lever">Lever</option>
+        </select>
+        <input id="srcToken" placeholder="company token, e.g. stripe">
+        <button id="addSrcBtn">Add</button>
+      </div>
+      <h3>Added companies</h3>
+      <div id="srcList"><div class="empty">None added yet.</div></div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0;">A note on LinkedIn / Indeed</h3>
+      <p class="small">
+        LinkedIn and Indeed don't offer a public API for pulling listings or submitting applications, and both explicitly
+        prohibit automated scraping/applying in their terms — accounts that do it get banned. This tool intentionally
+        doesn't touch either site programmatically. When you find something on LinkedIn/Indeed manually, use the
+        <b>Prep Sheet</b> feature (paste the job title/description into a manual entry below) to get your tailored
+        answers ready, then apply yourself on the real site.
+      </p>
+      <button class="secondary" id="showManualEntry">+ Add a manually-found job (LinkedIn/Indeed/company site)</button>
+      <div id="manualEntryForm" class="hidden" style="margin-top:12px;">
+        <label>Job title</label><input id="manTitle">
+        <label>Company</label><input id="manCompany">
+        <label>Location</label><input id="manLocation">
+        <label>Listing URL</label><input id="manUrl">
+        <label>Paste job description (optional, but needed for AI-drafted answers)</label>
+        <textarea id="manDescription" style="min-height:100px;"></textarea>
+        <button id="manSaveBtn">Save to tracker</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="tab-pane hidden" id="tab-settings">
+    <div class="panel">
+      <h2>Data &amp; security</h2>
+      <p class="small">
+        Everything (profile, answers, tracker, sources) is encrypted with a key derived from your password
+        (PBKDF2 + AES-GCM via your browser's Web Crypto API) and stored only in this browser's local storage.
+        Nothing is sent to any server except the read-only job-board API calls you configure in Sources.
+        There is no password recovery — if you forget it, the encrypted data is unreadable and you'll need to wipe.
+      </p>
+      <button class="secondary" id="exportBtn">Export encrypted backup (.json)</button>
+      <button class="secondary" id="importBtn">Import backup</button>
+      <input type="file" id="importFile" accept=".json" class="hidden">
+      <h3>Change password</h3>
+      <p class="small">Re-encrypts everything you've saved under a new password — no data lost.</p>
+      <input type="password" id="newPw1" placeholder="New password">
+      <input type="password" id="newPw2" placeholder="Confirm new password">
+      <button id="changePwBtn">Update password</button>
+      <span class="small" id="changePwStatus" style="margin-left:8px;"></span>
+    </div>
+    <div class="panel">
+      <h2>AI-assisted answers</h2>
+      <p class="small">
+        Add your own Anthropic API key to let this tool draft tailored answers ("Why do you want to work here?" etc.)
+        for each specific job, using your resume + that job's description. You review and edit every draft before
+        anything is saved — nothing is auto-submitted. Get a free key at
+        <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> —
+        drafting costs a small fraction of a cent per job on the API, it isn't bundled free like the rest of this tool.
+        Your key is encrypted in this vault only; it's never written into the site's code or repo.
+      </p>
+      <label>Anthropic API key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+      <button id="saveApiKeyBtn">Save key</button>
+      <span class="small" id="apiKeyStatus" style="margin-left:8px;"></span>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0;">Danger zone</h3>
+      <button class="danger" id="wipeBtn">Wipe all data</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI answer review modal -->
+<div id="aiModal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;">
+  <div class="panel" style="max-width:520px;width:100%;max-height:85vh;overflow-y:auto;">
+    <h2 id="aiModalTitle">Tailored answers</h2>
+    <div id="aiModalStatus" class="small"></div>
+    <div id="aiModalFields"></div>
+    <div class="flexbtns">
+      <button id="aiRegenBtn" class="secondary">Regenerate</button>
+      <button id="aiSaveBtn">Save to this job</button>
+      <button id="aiCloseBtn" class="ghost">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
